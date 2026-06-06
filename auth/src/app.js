@@ -1,13 +1,36 @@
-import express from "express"
-import authRoute from "./routes/auth.route.js"
+import express, { urlencoded } from "express"
+import authRoutes from "./routes/auth.route.js"
 import cookieParser from "cookie-parser"
+import morgan from "morgan"
+import passport from "passport"
+import { Strategy as GoogleStrategy } from "passport-google-oauth20"
+import config from "./config/config.js"
+
 
 const app = express()
 
-
 app.use(express.json())
+app.use(morgan("dev"))
+app.use(urlencoded({ extended: true }))
 app.use(cookieParser())
 
-app.use("/api/auth", authRoute)
+app.use(passport.initialize());
+
+// Configure Passport to use Google OAuth 2.0 strategy
+passport.use(new GoogleStrategy({
+    clientID: config.GOOGLE_CLIENT_ID,
+    clientSecret: config.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/api/auth/google/callback',
+  }, (accessToken, refreshToken, profile, done) => {
+    // Here, you would typically find or create a user in your database
+    // For this example, we'll just return the profile
+    return done(null, profile);
+  }));
+
+
+
+
+
+app.use("/api/auth", authRoutes)
 
 export default app
