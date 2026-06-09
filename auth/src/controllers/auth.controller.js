@@ -149,60 +149,81 @@ export async function googleAuthCallback(req, res) {
   }
 }
 
-// //Login user
-// export async function loginUser(req, res) {
-//   const { email, password } = req.body;
+// Login user
+export async function loginUser(req, res) {
+  const { email, password } = req.body;
 
-//   try {
-//     const user = await userModel.findOne({ email }).select("+password");
+  try {
+    
+    const user = await userModel.findOne({ email }).select("+password");
 
-//     if (!user) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "User not found",
-//       });
-//     }
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-//     const vaildPassword = await bcrypt.compare(password, user.password);
+    const vaildPassword = await bcrypt.compare(password, user.password);
 
-//     if (!vaildPassword) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Invalid Password",
-//       });
-//     }
+    if (!vaildPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Password",
+      });
+    }
 
-//     const token = jet.sign({
-//       id: user._id,
-//       email: user.email,
-//       role: user.role,
-//     }, config.JWT_SECRET, { expiresIn: "2d"});
+    const token = jwt.sign({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    }, config.JWT_SECRET, { expiresIn: "2d"});
 
-//     res.cookie("token", token)
+    res.cookie("token", token)
 
-//     return res.status(200).json({
-//       success:true,
-//       message: "User Logged in successfully"
-//     })
+    return res.status(200).json({
+      success:true,
+      message: "User Logged in successfully"
+    })
 
-//   } catch (error) {
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
 
-// // Current User
-// export async function getCurrentUser(req, res) {
-//   return res.status(200).json({
-//     success: true,
-//     message: "Current User Fetched Successfully",
-//     user: req.user,
-//   });
-// }
+// Current User
+export async function getCurrentUser(req, res) {
+  return res.status(200).json({
+    success: true,
+    message: "Current User Fetched Successfully",
+    user: req.user,
+  });
+}
 
-// // Logout user
-// export async function logoutUser(req, res) {
+// Logout user
+export async function logoutUser(req, res) {
+  const token = req.cookies.token;
 
-// }
+  try {
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User Logged Out Successfully",
+    });
+    
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}

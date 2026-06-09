@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import config from "../config/config.js"
 
 export function authMiddleware(req, res, next) {
-  const token = req.cookie?.token;
+  const token = req.cookies?.token;
 
   if (!token) {
     return res.status(401).json({

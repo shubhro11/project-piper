@@ -124,7 +124,11 @@ export const loginUserRules = [
       return true;
     })
 
-    .normalizeEmail(),
+    .normalizeEmail({
+      all_lowercase: true,
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+    }),
 
   body("password")
     .if((value, { req }) => !req.body.googleId)
