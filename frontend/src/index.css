@@ -9,6 +9,15 @@ input:-webkit-autofill {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+.scrollbar-gutter-both {
+  scrollbar-gutter: stable both-edges;
+}
+
 .scrollbar-custom::-webkit-scrollbar {
   width: 6px;
 }
@@ -18,18 +27,11 @@ input:-webkit-autofill {
 }
 
 .scrollbar-custom::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.3); /* subtle */
+  background: rgba(148, 163, 184, 0.3);
   border-radius: 9999px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(148, 163, 184, 0.6);
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.3);
+  transition: background 0.2s ease;
 }
 
 .scrollbar-custom:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.5);
+  background: rgba(148, 163, 184, 0.5);
 }
