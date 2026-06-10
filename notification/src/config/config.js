@@ -5,7 +5,6 @@ dotenvConfig();
 const _config = {
   SERVICE_PORT: process.env.SERVICE_PORT,
 
-  MONGODB_URI: process.env.MONGODB_URI,
   JWT_SECRET: process.env.JWT_SECRET,
 
   GOOGLE_REFRESH_TOKEN: process.env.REFRESH_TOKEN,
