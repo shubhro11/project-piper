@@ -41,6 +41,7 @@ export async function registerUser(req, res) {
       {
         id: user._id,
         role: user.role,
+        fullName: user.fullName
       },
       config.JWT_SECRET,
       { expiresIn: "2d" },
@@ -67,6 +68,7 @@ export async function registerUser(req, res) {
         role: user.role,
       },
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -87,23 +89,25 @@ export async function googleAuthCallback(req, res) {
     // If User exists, then user will be logged
     if (userExists) {
       const token = jwt.sign(
-        { id: userExists._id, role: userExists.role },
+        { id: userExists._id, role: userExists.role, fullName: userExists.fullName },
         config.JWT_SECRET,
         { expiresIn: "2d" },
       );
 
       res.cookie("token", token);
 
-      return res.status(200).json({
-        success: true,
-        message: "User Logged in successfully",
-        user: {
-          id: userExists._id,
-          email: userExists.email,
-          fullName: userExists.fullName,
-          role: userExists.role,
-        },
-      });
+      return res.redirect('http://localhost:5173'); // redirects to your frontend URL
+
+      // return res.status(200).json({
+      //   success: true,
+      //   message: "User Logged in successfully",
+      //   user: {
+      //     id: userExists._id,
+      //     email: userExists.email,
+      //     fullName: userExists.fullName,
+      //     role: userExists.role,
+      //   },
+      // });
     }
 
     // If User DOES NOT EXIST,then register user
@@ -117,7 +121,7 @@ export async function googleAuthCallback(req, res) {
     });
 
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
+      { id: newUser._id, role: newUser.role, fullName: newUser.fullName, },
       config.JWT_SECRET,
       { expiresIn: "2d" },
     );
@@ -131,16 +135,19 @@ export async function googleAuthCallback(req, res) {
 
     res.cookie("token", token);
 
-    return res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        fullName: newUser.fullName,
-        role: newUser.role,
-      },
-    });
+    return res.redirect('http://localhost:5173'); // redirects to your frontend URL
+
+    // return res.status(201).json({
+    //   success: true,
+    //   message: "User registered successfully",
+    //   user: {
+    //     id: newUser._id,
+    //     email: newUser.email,
+    //     fullName: newUser.fullName,
+    //     role: newUser.role,
+    //   },
+    // });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
