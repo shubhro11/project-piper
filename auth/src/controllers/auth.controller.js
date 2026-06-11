@@ -184,6 +184,7 @@ export async function loginUser(req, res) {
       id: user._id,
       email: user.email,
       role: user.role,
+      fullName: user.fullName
     }, config.JWT_SECRET, { expiresIn: "2d"});
 
     res.cookie("token", token)
