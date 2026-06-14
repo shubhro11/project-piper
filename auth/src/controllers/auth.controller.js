@@ -12,6 +12,7 @@ export async function registerUser(req, res) {
     email,
     password,
     role,
+    artistProfile: {stageName, bio}
   } = req.body;
 
   try {
@@ -34,6 +35,7 @@ export async function registerUser(req, res) {
       email,
       password: hashedPassword,
       role: role || "user", // Default role is "user"
+      artistProfile: {stageName, bio}
     });
 
     // Generating Token

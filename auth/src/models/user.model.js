@@ -17,8 +17,27 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "artist"],
+      enum: ["user", "artist", "admin"],
       default: "user",
+    },
+
+    artistProfile: {
+      stageName: {
+        type: String,
+        trim: true,
+        required: function () {
+          return this.role === "artist";
+        },
+      },
+      bio: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

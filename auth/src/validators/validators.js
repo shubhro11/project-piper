@@ -146,6 +146,13 @@ export const loginUserRules = [
     .withMessage(
       "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character",
     ),
+    
+    body("artistProfile.stageName")
+    .trim()
+    .notEmpty()
+    .withMessage("Stage Name is required")
+    .isString()
+    .withMessage("Stage name must be a string"),
 
   validateErrorResponse,
 ];
