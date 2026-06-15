@@ -1,13 +1,22 @@
 import express, { urlencoded } from "express"
-import authRoutes from "./routes/auth.route.js"
+import cors from "cors";
 import cookieParser from "cookie-parser"
 import morgan from "morgan"
 import passport from "passport"
 import { Strategy as GoogleStrategy } from "passport-google-oauth20"
+
 import config from "./config/config.js"
+import authRoutes from "./routes/auth.route.js"
 
 
 const app = express()
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(express.json())
 app.use(morgan("dev"))
