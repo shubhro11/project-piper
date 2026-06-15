@@ -1,9 +1,9 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
+import { publishToQueue } from "../broker/rabbit.js";
 import config from "../config/config.js";
 import userModel from "../models/user.model.js";
-import { publishToQueue } from "../broker/rabbit.js";
 
 // Register User
 export async function registerUser(req, res) {
@@ -11,8 +11,6 @@ export async function registerUser(req, res) {
     fullName: { firstName, middleName, lastName },
     email,
     password,
-    role,
-    artistProfile: {stageName, bio}
   } = req.body;
 
   try {
@@ -34,8 +32,6 @@ export async function registerUser(req, res) {
       fullName: { firstName, middleName, lastName },
       email,
       password: hashedPassword,
-      role: role || "user", // Default role is "user"
-      artistProfile: {stageName, bio}
     });
 
     // Generating Token
@@ -43,12 +39,11 @@ export async function registerUser(req, res) {
       {
         id: user._id,
         role: user.role,
-        fullName: user.fullName
+        fullName: user.fullName,
       },
       config.JWT_SECRET,
       { expiresIn: "2d" },
     );
-
 
     await publishToQueue("user_created", {
       id: user._id,
@@ -57,8 +52,7 @@ export async function registerUser(req, res) {
       role: user.role,
     });
 
-    
-    res.cookie("token", token);
+    res.cookie("piper_token", token);
 
     return res.status(201).json({
       success: true,
@@ -70,14 +64,16 @@ export async function registerUser(req, res) {
         role: user.role,
       },
     });
-
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 }
+
 
 // Register with Google Oauth
 export async function googleAuthCallback(req, res) {
@@ -90,26 +86,40 @@ export async function googleAuthCallback(req, res) {
 
     // If User exists, then user will be logged
     if (userExists) {
+
+      // Link Google account if not already linked
+      if (!userExists.googleId) {
+        userExists.googleId = user.id;
+      }
+
+      userExists.isVerified = true;
+
+      await userExists.save();
+
       const token = jwt.sign(
-        { id: userExists._id, role: userExists.role, fullName: userExists.fullName },
+        {
+          id: userExists._id,
+          role: userExists.role,
+          fullName: userExists.fullName,
+        },
         config.JWT_SECRET,
         { expiresIn: "2d" },
       );
 
-      res.cookie("token", token);
+      res.cookie("piper_token", token);
 
-      return res.redirect('http://localhost:5173'); // redirects to your frontend URL
+      // return res.redirect("http://localhost:5173"); // redirects to your frontend URL
 
-      // return res.status(200).json({
-      //   success: true,
-      //   message: "User Logged in successfully",
-      //   user: {
-      //     id: userExists._id,
-      //     email: userExists.email,
-      //     fullName: userExists.fullName,
-      //     role: userExists.role,
-      //   },
-      // });
+      return res.status(200).json({
+        success: true,
+        message: "User Logged in successfully",
+        user: {
+          id: userExists._id,
+          email: userExists.email,
+          fullName: userExists.fullName,
+          role: userExists.role,
+        },
+      });
     }
 
     // If User DOES NOT EXIST,then register user
@@ -120,10 +130,11 @@ export async function googleAuthCallback(req, res) {
         firstName: user.name.givenName,
         lastName: user.name.familyName,
       },
+      isVerified: true
     });
 
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role, fullName: newUser.fullName, },
+      { id: newUser._id, role: newUser.role, fullName: newUser.fullName },
       config.JWT_SECRET,
       { expiresIn: "2d" },
     );
@@ -135,41 +146,166 @@ export async function googleAuthCallback(req, res) {
       role: newUser.role,
     });
 
-    res.cookie("token", token);
+    res.cookie("piper_token", token);
 
-    return res.redirect('http://localhost:5173'); // redirects to your frontend URL
+    // return res.redirect("http://localhost:5173"); // redirects to your frontend URL
 
-    // return res.status(201).json({
-    //   success: true,
-    //   message: "User registered successfully",
-    //   user: {
-    //     id: newUser._id,
-    //     email: newUser.email,
-    //     fullName: newUser.fullName,
-    //     role: newUser.role,
-    //   },
-    // });
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        role: newUser.role,
+      },
+    });
 
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 }
+
+
+// Upgrade to Artist
+export async function becomeArtist(req, res) {
+  try {
+    const { isStageNameSameAsFullName, stageName } = req.body;
+
+    const user = await userModel.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "artist") {
+      return res.status(409).json({
+        success: false,
+        message: "Account is already an artist account",
+      });
+    }
+
+    user.role = "artist";
+    user.isStageNameSameAsFullName = isStageNameSameAsFullName;
+
+    if (isStageNameSameAsFullName === false) {
+      user.stageName = stageName.trim();
+    }
+
+    await user.save();
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        stageName: user.stageName,
+        fullName: user.fullName,
+      },
+      config.JWT_SECRET,
+      { expiresIn: "2d" },
+    );
+
+    res.cookie("piper_token", token);
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully updated Account role as Artist",
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        stageName: user.stageName,
+        isStageNameSameAsFullName: user.isStageNameSameAsFullName,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+}
+
+
+
+export async function enablePassword(req, res){
+  try {
+    const { password } = req.body
+
+    const user = await userModel.findById(req.user.id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.password) {
+      return res.status(400).json({
+        success: false,
+        message: "Password login is already enabled for this account.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password login enabled successfully. You can now login using Google or email and password.",
+    });
+
+
+    
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+
+
+}
+
+
 
 // Login user
 export async function loginUser(req, res) {
   const { email, password } = req.body;
 
   try {
-    
     const user = await userModel.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    // Google account trying password login
+    if (user.googleId && !user.password) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This account was created using Google. Please continue with Google Sign-In.",
       });
     }
 
@@ -182,35 +318,63 @@ export async function loginUser(req, res) {
       });
     }
 
-    const token = jwt.sign({
+    const tokenPayload = {
       id: user._id,
       email: user.email,
       role: user.role,
-      fullName: user.fullName
-    }, config.JWT_SECRET, { expiresIn: "2d"});
+      fullName: user.fullName,
+    };
 
-    res.cookie("token", token)
+    if (user.role === "artist") {
+      tokenPayload.stageName = user.stageName;
+    }
+
+    const token = jwt.sign(
+      tokenPayload,
+      config.JWT_SECRET,
+      { expiresIn: "2d" },
+    );
+
+    res.cookie("piper_token", token);
 
     return res.status(200).json({
-      success:true,
-      message: "User Logged in successfully"
-    })
-
+      success: true,
+      message: "User Logged in successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        stageName: user.stageName,
+      },
+    });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 }
 
 // Current User
 export async function getCurrentUser(req, res) {
-  return res.status(200).json({
-    success: true,
-    message: "Current User Fetched Successfully",
-    user: req.user,
-  });
+  try {
+    return res.status(200).json({
+      success: true,
+      message: "Current User Fetched Successfully",
+      user: req.user,
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
 }
 
 // Logout user
@@ -218,8 +382,7 @@ export async function logoutUser(req, res) {
   const token = req.cookies.token;
 
   try {
-
-    res.clearCookie("token", {
+    res.clearCookie("piper_token", {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
@@ -229,11 +392,12 @@ export async function logoutUser(req, res) {
       success: true,
       message: "User Logged Out Successfully",
     });
-    
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 }

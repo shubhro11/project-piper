@@ -20,6 +20,15 @@ router.post(
 router.post("/login", validators.loginUserRules, authController.loginUser);
 
 
+// Upgrade to Artist >> PATCH /api/auth => /become-artist
+router.patch("/become-artist", middlewares.authMiddleware, validators.upgradeArtistRules, authController.becomeArtist);
+
+
+// Enable Password Login >> PATCH /api/auth => /enable-password
+router.patch("/enable-password", middlewares.authMiddleware, validators.enablePasswordRules, authController.enablePassword
+);
+
+
 // Current User >> GET /api/auth => /me
 router.get("/me", middlewares.authMiddleware, authController.getCurrentUser);
 

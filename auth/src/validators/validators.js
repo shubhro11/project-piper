@@ -74,6 +74,7 @@ export const registerUserRules = [
     .if((value, { req }) => !req.body.googleId)
     .notEmpty()
     .withMessage("Password is required")
+    .bail()
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
     .matches(/[A-Z]/)
@@ -85,10 +86,6 @@ export const registerUserRules = [
     .matches(/[@$!%*?&^#()[\]{}\-_=+|\\/.,:;"'<>~`]/)
     .withMessage("Password must contain at least 1 special character"),
 
-  body("role")
-    .optional()
-    .isIn(["user", "artist"])
-    .withMessage("Role must be either 'user' or 'artist'"),
 
   validateErrorResponse,
 ];
@@ -138,21 +135,71 @@ export const loginUserRules = [
     .if((value, { req }) => !req.body.googleId)
     .notEmpty()
     .withMessage("Password is required")
+    .bail()
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters long")
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\/.,:;"'<>~`]).+$/,
-    )
-    .withMessage(
-      "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character",
-    ),
-    
-    body("artistProfile.stageName")
-    .trim()
-    .notEmpty()
-    .withMessage("Stage Name is required")
-    .isString()
-    .withMessage("Stage name must be a string"),
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least 1 uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least 1 lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least 1 number")
+    .matches(/[@$!%*?&^#()[\]{}\-_=+|\\/.,:;"'<>~`]/)
+    .withMessage("Password must contain at least 1 special character"),
 
   validateErrorResponse,
 ];
+
+
+const isFalseValue = (value) => {
+  return value === false || value === "false" || value === 0 || value === "0";
+};
+
+export const upgradeArtistRules = [
+  body("isStageNameSameAsFullName")
+    .exists({ checkFalsy: false })
+    .withMessage("isStageNameSameAsFullName is required")
+    .bail()
+    .isBoolean()
+    .withMessage("isStageNameSameAsFullName must be true or false")
+    .bail()
+    .toBoolean(),
+
+  body("stageName")
+    .if((value, { req }) => {
+      return isFalseValue(req.body.isStageNameSameAsFullName);
+    })
+    .trim()
+    .notEmpty()
+    .withMessage("Stage name is required when it is different from your name")
+    .bail()
+    .isString()
+    .withMessage("Stage name must be a string")
+    .bail()
+    .isLength({ min: 2, max: 50 })
+    .withMessage("Stage name must be between 2 and 50 characters"),
+
+  validateErrorResponse,
+];
+
+
+export const enablePasswordRules = [
+  body("password")
+    .trim()
+    .notEmpty()
+    .withMessage("Password is required")
+    .bail()
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters long")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least 1 uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least 1 lowercase letter")
+    .matches(/\d/)
+    .withMessage("Password must contain at least 1 number")
+    .matches(/[@$!%*?&^#()[\]{}\-_=+|\\/.,:;"'<>~`]/)
+    .withMessage("Password must contain at least 1 special character"),
+
+
+  validateErrorResponse,
+]
