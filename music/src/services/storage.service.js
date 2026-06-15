@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import config from "../config/config.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -14,12 +19,22 @@ export async function uploadFile(file) {
   const key = `${uuidv4()}-${file.originalname}`;
 
   const command = new PutObjectCommand({
-    Bucket: "piper-s3-bucket",
+    Bucket: config.S3_BUCKET,
     Body: file.buffer,
     Key: key,
   });
 
   const response = await s3.send(command);
-
   return key;
+}
+
+export async function getPresignedUrl(key) {
+
+  const command = new GetObjectCommand({
+    Bucket: config.S3_BUCKET,
+    Key: key,
+  });
+
+  const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+  return url
 }
