@@ -16,13 +16,6 @@ export const registerUserRules = [
     .isString()
     .withMessage("First name must be a string"),
 
-  // Optional middle name
-  body("fullName.middleName")
-    .optional({ checkFalsy: true }) // Skips validation if it is null, undefined, or an empty string
-    .trim()
-    .isString()
-    .withMessage("Middle name must be a string"),
-
   body("fullName.lastName")
     .trim()
     .notEmpty()

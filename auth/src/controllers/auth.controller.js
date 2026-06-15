@@ -8,7 +8,7 @@ import userModel from "../models/user.model.js";
 // Register User
 export async function registerUser(req, res) {
   const {
-    fullName: { firstName, middleName, lastName },
+    fullName: { firstName, lastName },
     email,
     password,
   } = req.body;
@@ -29,7 +29,7 @@ export async function registerUser(req, res) {
 
     // Add user to db
     const user = await userModel.create({
-      fullName: { firstName, middleName, lastName },
+      fullName: { firstName, lastName },
       email,
       password: hashedPassword,
     });
