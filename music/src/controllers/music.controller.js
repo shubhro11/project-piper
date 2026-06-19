@@ -38,6 +38,7 @@ export async function uploadMusic(req, res) {
       genre: req.body.genre,
       subGenre: req.body.subGenre,
       language: req.body.language,
+      duration: req.body.duration,
       isExplicit: req.body.isExplicit,
       releaseYear: req.body.releaseYear,
 
@@ -120,8 +121,12 @@ export async function getAllMusicTracks(req, res) {
           getPresignedUrl(music.coverImageKey),
         ]);
 
-        return { ...music, musicUrl, coverImageUrl };
-      }),
+        return {
+          ...music,
+          musicUrl,
+          coverImageUrl,
+        };
+      })
     );
 
     return res.status(200).json({
@@ -131,6 +136,7 @@ export async function getAllMusicTracks(req, res) {
     });
   } catch (error) {
     console.log(error);
+
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -142,7 +148,7 @@ export async function getAllMusicTracks(req, res) {
 // Get all tracks of Artist
 export async function getArtistMusic(req, res) {
   try {
-    const musics = await musicModel.find({ artistId: req.user.id }).lean();
+    const musics = await musicModel.find({ artistId: req.user.id }).sort({ createdAt: -1 }).lean();
 
     const musicsWithUrls = await Promise.all(
       musics.map(async (music) => {
@@ -201,7 +207,7 @@ export async function createPlaylist(req, res) {
 // Get all Playlists
 export async function getAllPlaylists(req, res) {
   try {
-    const playlists = await playlistModel.find();
+    const playlists = await playlistModel.find().sort({ createdAt: -1 });
     // const playlists = await playlistModel.find({ artistId: req.user.id })
 
     return res.status(200).json({
@@ -218,6 +224,29 @@ export async function getAllPlaylists(req, res) {
     });
   }
 }
+
+
+export async function getArtistPlaylists(req, res) {
+  try {
+    const playlists = await playlistModel.find({ artistId: req.user.id }).sort({ createdAt: -1 }).lean();
+
+    return res.status(200).json({
+      status: true,
+      message: "Artist playlists fetched successfully",
+      playlists,
+    });
+    
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      status: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+}
+
 
 // Get Playlist by Id
 export async function getPlaylistById(req, res) {

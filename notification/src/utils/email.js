@@ -1,14 +1,15 @@
 import config from "../config/config.js";
 import nodemailer from "nodemailer";
 
+
+// Transporter for Brevo
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: config.BREVO_SMTP_HOST,
+  port: config.BREVO_SMTP_PORT,
+  secure: false, // true only for port 465
   auth: {
-    type: "OAuth2",
-    user: config.EMAIL_USER,
-    clientId: config.GOOGLE_CLIENT_ID,
-    clientSecret: config.GOOGLE_CLIENT_SECRET,
-    refreshToken: config.GOOGLE_REFRESH_TOKEN,
+    user: config.BREVO_SMTP_USER,
+    pass: config.BREVO_SMTP_KEY,
   },
 });
 
@@ -26,7 +27,7 @@ transporter.verify((error, success) => {
 const sendEmail = async (to, subject, text, html) => {
     try {
       const info = await transporter.sendMail({
-        from: `"Shubhro" <${process.env.EMAIL_USER}>`, // sender address
+        from: `"Shubhro" <${config.EMAIL_USER}>`, // sender address
         to, // list of receivers
         subject, // Subject line
         text, // plain text body

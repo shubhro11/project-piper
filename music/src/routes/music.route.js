@@ -13,7 +13,7 @@ const router = express.Router();
 router.post("/upload", middleware.artistAuthMiddleware, upload.fields([ { name: "musicFile", maxCount: 1 }, { name: "coverImageFile", maxCount: 1 } ]), validators.validateTrackUpload, musicController.uploadMusic);
 
 
-// Get All Music Tracks => GET => /
+// Get All Music Tracks => GET => / (Pagination)
 router.get("/", middleware.userAuthMiddleware, musicController.getAllMusicTracks)
 
 
@@ -32,6 +32,12 @@ router.post("/new-playlist", middleware.artistAuthMiddleware, musicController.cr
 
 // Get All Playlists => GET => /playlists
 router.get("/playlists", middleware.userAuthMiddleware, musicController.getAllPlaylists)
+
+
+// Get all playlists of Artist
+router.get("/artist-playlists", middleware.userAuthMiddleware, musicController.getArtistPlaylists)
+
+
 
 
 // Get Playlist By Id => GET => /playlist/:id
