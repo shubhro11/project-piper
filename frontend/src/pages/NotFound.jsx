@@ -1,8 +1,12 @@
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
 const NotFound = () => {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.user)
+  console.log(user)
   return (
     <>
       <Helmet>
@@ -24,10 +28,22 @@ const NotFound = () => {
           </p>
           <div className='flex items-center gap-4 mt-6'>
             <button
-              onClick={() => navigate("/home")}
-              className='w-40 py-3 active:scale-95 transition text-sm text-white rounded-lg bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700'
+              onClick={() => navigate("/")}
+              className={`${user ? "hidden" : "block"} group inline-flex items-center justify-center rounded-full border border-white/30 px-7 py-4 font-semibold text-white transition hover:bg-white/10`}
             >
-              Return Home
+              <span className='group-hover:-translate-x-1 transition-all duration-200 ease-in-out'>
+                <ArrowLeft size={18} />
+              </span>
+              Return to Home
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className='group inline-flex items-center justify-center gap-2 rounded-full bg-amber-400 px-7 py-4 font-semibold text-slate-950 transition hover:bg-amber-300'
+            >
+              Go Back
+              <span className='group-hover:translate-x-1 transition-all duration-200 ease-in-out'>
+                <ArrowRight size={18} />
+              </span>
             </button>
           </div>
         </div>

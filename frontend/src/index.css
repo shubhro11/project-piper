@@ -35,3 +35,39 @@ input:-webkit-autofill {
 .scrollbar-custom:hover::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.5);
 }
+
+
+.player-slider {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.player-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: #818cf8;
+  cursor: pointer;
+  border: none;
+}
+
+.player-slider::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: #818cf8;
+  cursor: pointer;
+  border: none;
+}
+
+.player-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+}
+
+.player-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+}
