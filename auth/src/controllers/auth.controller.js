@@ -74,103 +74,122 @@ export async function registerUser(req, res) {
   }
 }
 
-
 // Register with Google Oauth
 export async function googleAuthCallback(req, res) {
   const user = req.user;
+  const frontendUrl = "http://localhost:5173";
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 2 * 24 * 60 * 60 * 1000,
+  };
 
   try {
+    const flow = req.googleAuthFlow;
+
     const userExists = await userModel.findOne({
       $or: [{ email: user.emails[0].value }, { googleId: user.id }],
     });
 
-    // If User exists, then user will be logged
-    if (userExists) {
+    /* Google Register Flow */
+    if (flow === "register") {
+      // Account exists already: do not log them in
+      if (userExists) {
+        return res.redirect(`${frontendUrl}/signup?googleAuth=already_exists`);
+      }
 
-      // Link Google account if not already linked
+      const newUser = await userModel.create({
+        email: user.emails[0].value,
+        googleId: user.id,
+        fullName: {
+          firstName: user.name.givenName,
+          lastName: user.name.familyName,
+        },
+        isVerified: true,
+        role: "user",
+      });
+
+      
+      const token = jwt.sign({ 
+        id: newUser._id, 
+        role: newUser.role, 
+        fullName: newUser.fullName 
+      },
+        config.JWT_SECRET,
+        { expiresIn: "2d" },
+      );
+
+      await publishToQueue("user_created", {
+        id: newUser._id,
+        email: newUser.email,
+        fullName: newUser.fullName,
+        role: newUser.role,
+      });
+
+      res.cookie("piper_token", token);
+
+      return res.redirect(
+        `${frontendUrl}/account-type?googleAuth=register`,
+      ); // redirects to your frontend URL for account type
+    }
+
+
+    /* Google login Flow */
+    if (flow === "login") {
+      // Account does not exist: do not register them
+      if (!userExists) {
+        return res.redirect(`${frontendUrl}/signin?googleAuth=not_found`);
+      }
+
       if (!userExists.googleId) {
         userExists.googleId = user.id;
       }
 
       userExists.isVerified = true;
-
       await userExists.save();
 
-      const token = jwt.sign(
-        {
-          id: userExists._id,
-          role: userExists.role,
-          fullName: userExists.fullName,
-        },
-        config.JWT_SECRET,
-        { expiresIn: "2d" },
-      );
+      const tokenPayload = {
+        id: userExists._id,
+        role: userExists.role,
+        fullName: userExists.fullName,
+      };
 
-      res.cookie("piper_token", token);
+      if (userExists.role === "artist" && userExists.stageName) {
+        tokenPayload.stageName = userExists.stageName;
+      }
 
-      // return res.redirect("http://localhost:5173"); // redirects to your frontend URL
-
-      return res.status(200).json({
-        success: true,
-        message: "User Logged in successfully",
-        user: {
-          id: userExists._id,
-          email: userExists.email,
-          fullName: userExists.fullName,
-          role: userExists.role,
-        },
+      const token = jwt.sign(tokenPayload, config.JWT_SECRET, {
+        expiresIn: "2d",
       });
+
+      res.cookie("piper_token", token, cookieOptions);
+
+      if (userExists.role === "artist") {
+        return res.redirect(`${frontendUrl}/artist/dashboard?googleAuth=login`);
+      }
+
+      return res.redirect(`${frontendUrl}/dashboard?googleAuth=login`);
     }
 
-    // If User DOES NOT EXIST,then register user
-    const newUser = await userModel.create({
-      email: user.emails[0].value,
-      googleId: user.id,
-      fullName: {
-        firstName: user.name.givenName,
-        lastName: user.name.familyName,
-      },
-      isVerified: true
-    });
-
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role, fullName: newUser.fullName },
-      config.JWT_SECRET,
-      { expiresIn: "2d" },
-    );
-
-    await publishToQueue("user_created", {
-      id: newUser._id,
-      email: newUser.email,
-      fullName: newUser.fullName,
-      role: newUser.role,
-    });
-
-    res.cookie("piper_token", token);
-
-    // return res.redirect("http://localhost:5173"); // redirects to your frontend URL
-
-    return res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        fullName: newUser.fullName,
-        role: newUser.role,
-      },
-    });
+    return res.redirect(`${frontendUrl}/signin?googleAuth=invalid_flow`);
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error.message,
-    });
+    console.error("Google OAuth callback error:", error);
+
+    return res.redirect(
+      "http://localhost:5173/signin?googleAuth=failed",
+    );
+    // return res.status(500).json({
+    //   success: false,
+    //   message: "Internal Server Error",
+    //   error: error.message,
+    // });
   }
 }
 
+export async function completeOnboarding(req, res) {}
 
 // Upgrade to Artist
 export async function becomeArtist(req, res) {
@@ -237,11 +256,9 @@ export async function becomeArtist(req, res) {
   }
 }
 
-
-
-export async function enablePassword(req, res){
+export async function enablePassword(req, res) {
   try {
-    const { password } = req.body
+    const { password } = req.body;
 
     const user = await userModel.findById(req.user.id).select("+password");
 
@@ -267,24 +284,18 @@ export async function enablePassword(req, res){
 
     return res.status(200).json({
       success: true,
-      message: "Password login enabled successfully. You can now login using Google or email and password.",
+      message:
+        "Password login enabled successfully. You can now login using Google or email and password.",
     });
-
-
-    
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
       error: error.message,
     });
   }
-
-
 }
-
-
 
 // Login user
 export async function loginUser(req, res) {
@@ -329,11 +340,9 @@ export async function loginUser(req, res) {
       tokenPayload.stageName = user.stageName;
     }
 
-    const token = jwt.sign(
-      tokenPayload,
-      config.JWT_SECRET,
-      { expiresIn: "2d" },
-    );
+    const token = jwt.sign(tokenPayload, config.JWT_SECRET, {
+      expiresIn: "2d",
+    });
 
     res.cookie("piper_token", token);
 
@@ -366,7 +375,6 @@ export async function getCurrentUser(req, res) {
       message: "Current User Fetched Successfully",
       user: req.user,
     });
-
   } catch (error) {
     console.log(error);
     return res.status(500).json({

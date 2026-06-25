@@ -4,6 +4,10 @@ import passport from "passport"
 import * as authController from "../controllers/auth.controller.js";
 import * as validators from "../validators/validators.js";
 import * as middlewares from "../middlewares/auth.middleware.js";
+import {
+  beginGoogleAuth,
+  verifyGoogleFlow,
+} from "../middlewares/googleOAuth.middleware.js";
 
 
 const router = express.Router();
@@ -38,10 +42,10 @@ router.post("/logout", authController.logoutUser);
 
 
 // Route to initiate Google OAuth flow
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }) );
+router.get("/google", beginGoogleAuth);
 
 
 // Callback route that Google will redirect to after authentication
-router.get("/google/callback", passport.authenticate("google", { session: false }), authController.googleAuthCallback);
+router.get("/google/callback", passport.authenticate("google", { session: false, failureRedirect: "http://localhost:5173/signin?googleAuth=failed", }), verifyGoogleFlow, authController.googleAuthCallback);
 
 export default router;
