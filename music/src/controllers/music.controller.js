@@ -112,7 +112,7 @@ export async function getAllMusicTracks(req, res) {
   try {
     const { skip = 0, limit = 10 } = req.query;
 
-    const musicDocs = await musicModel.find().lean();
+    const musicDocs = await musicModel.find().skip(skip).limit(limit).lean();
 
     const musics = await Promise.all(
       musicDocs.map(async (music) => {
