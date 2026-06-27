@@ -56,7 +56,7 @@ const ArtistHubSection = () => {
           <div className='flex flex-row lg:flex-col gap-3'>
           <button
               onClick={() => navigate("/signin")}
-              className='group lg:order-2 inline-flex items-center justify-center rounded-full border border-white/30 px-7 py-4 font-semibold text-white transition hover:bg-white/10'
+              className='group lg:order-2 inline-flex items-center justify-center rounded-full border border-white/30 px-7 py-4 font-semibold text-white transition hover:bg-white/10 cursor-pointer'
             >
               Open Artist Dashboard
               <span className='group-hover:translate-x-1 transition-all duration-200 ease-in-out'>
@@ -65,7 +65,7 @@ const ArtistHubSection = () => {
             </button>
             <button
               onClick={() => navigate("/register-artist")}
-              className='group lg:order-1 inline-flex items-center justify-center gap-2 rounded-full bg-amber-400 px-7 py-4 font-semibold text-slate-950 transition hover:bg-amber-300'
+              className='group lg:order-1 inline-flex items-center justify-center gap-2 rounded-full bg-amber-400 px-7 py-4 font-semibold text-slate-950 transition hover:bg-amber-300 cursor-pointer'
             >
               Register as an Artist
               <span className='group-hover:translate-x-1 transition-all duration-200 ease-in-out'>

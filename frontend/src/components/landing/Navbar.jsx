@@ -17,15 +17,17 @@ const Navbar = () => {
     <>
       <header className='fixed top-0 left-0 z-50 w-full border-b border-white/10 bg-slate-950/75 backdrop-blur-xl drop-shadow-xl drop-shadow-slate-950/75'>
         <nav className='mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8'>
-          <Link to='/home' className='flex items-center gap-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20'>
-              {/* Changed rotate-350 to a valid standard class or arbitrary value */}
-              <Music2 size={22} className='-rotate-12' />
-            </div>
+          <Link to='/home'>
+            <div className='flex items-center gap-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20'>
+                {/* <Music2 size={22} className='-rotate-12' /> */}
+                <span className='text-2xl leading-none'>♪</span>
+              </div>
 
-            <div>
-              <h1 className='text-xl font-bold tracking-tight'>Piper</h1>
-              <p className='text-xs text-slate-400'>Music for everyone</p>
+              <div>
+                <h1 className='text-xl font-bold tracking-tight'>Piper</h1>
+                <p className='text-xs text-slate-400'>Music for everyone</p>
+              </div>
             </div>
           </Link>
 

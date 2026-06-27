@@ -34,7 +34,7 @@ const HeroSection = () => {
             <div className='mt-8 flex flex-col justify-center gap-4 sm:flex-row'>
               <button
                 onClick={() => navigate("/signup")}
-                className='group inline-flex items-center justify-center gap-2 rounded-full bg-amber-400 px-7 py-4 font-semibold text-slate-950 transition hover:bg-amber-300'
+                className='group inline-flex items-center justify-center gap-2 rounded-full bg-amber-400 px-7 py-4 font-semibold text-slate-950 transition hover:bg-amber-300 cursor-pointer'
               >
                 Explore Piper
                 <span className='group-hover:translate-x-1 transition-all duration-200 ease-in-out'>
